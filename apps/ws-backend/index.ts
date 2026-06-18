@@ -10,6 +10,7 @@ wss.on('connection', function connection(ws) {
       if (client.readyState === WebSocket.OPEN) {
         client.send(data, { binary: isBinary });
       }
-    });
+    
   });
 });
+})
