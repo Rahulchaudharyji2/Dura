@@ -8,7 +8,7 @@ export default function TestPage() {
 
   const showToken = async () => {
    const token = await getToken();
-console.log(token);
+ console.log(token);
     console.log(token);
     alert("Token printed in browser console");
   };

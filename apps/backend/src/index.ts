@@ -18,27 +18,45 @@ app.post("/joinroom/:roomId", authMiddleware, async (req: any, res: any) => {
       id: roomId,
     },
   });
-  try{
+  try {
+    if (!room) {
+      await prisma.room.create({
+        data: {
+          id: roomId,
+          name: `Room ${roomId}`,
+          users: {
+            connect: {
+              id: userId,
+            },
+          },
+        },
+      });
 
-   if (!room) {
-  await prisma.room.create({
-    data: {
-      id: roomId,
-      name: `Room ${roomId}`,
-    },
-  });
+      return res
+        .status(201)
+        .json({ message: "Room created and joined successfully" });
+    }
 
-  return res
-    .status(201)
-    .json({ message: "Room created and joined successfully" });
-}
+    return;
+    await prisma.room.update({
+      where: {
+        id: roomId,
+      },
+      data: {
+        users: {
+          connect: {
+            id: userId,
+          },
+        },
+      },
+    });
 
-return res
-  .status(200)
-  .json({ message: "Joined existing room successfully" });
-  }catch(err){
+    res.status(200).json({ message: "Joined existing room successfully" });
+  } catch (err) {
     console.error(err);
-    return res.status(500).json({ message: "Internal server error" , error: String(err)});
+    return res
+      .status(500)
+      .json({ message: "Internal server error", error: String(err) });
   }
 });
 app.get("/debug", authMiddleware, (req: any, res) => {

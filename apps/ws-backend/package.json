@@ -10,7 +10,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@clerk/backend": "^3.7.1",
     "@types/express": "^5.0.6",
+    "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "ws": "^8.21.0"
   },
@@ -18,6 +20,8 @@
     "@types/node": "^22.15.3",
     "@types/ws": "^8.18.1",
     "ts-node": "^10.9.2",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "@repo/typescript-config": "workspace:*",
+    "@repo/db": "workspace:*"
   }
 }
