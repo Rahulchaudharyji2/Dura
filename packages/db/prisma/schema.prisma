@@ -13,11 +13,10 @@ datasource db {
 }
 
 model User {
-  id   String @id @default(uuid())
+  id String @id @default(uuid())
   clerkId String @unique
   name String
   email String @unique
-  password String
   messages Message[]
   rooms Room[] 
 
@@ -26,14 +25,22 @@ model User {
 model Message {
   id String @id @default(uuid())
   content String
-  userId String
-  user User @relation(fields: [userId], references: [id])
+  clerkId String
+  user User @relation(fields: [clerkId], references: [clerkId])
   roomId String
   room Room @relation(fields: [roomId], references: [id])
+}
+enum TypeofRoom{
+  voice
+  chat
+  VideoRoom
+  gamingRoom
 }
 model Room {
   id String @id @default(uuid())
   name String
+  typeofRoom TypeofRoom @default(chat)
+  
   users User[] 
   messages Message[]
 
