@@ -10,6 +10,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import axios from "axios";
+
 
 const items = [
   { label: "Voice", value: "Voice" },
@@ -18,11 +20,17 @@ const items = [
   { label: "Gaming", value: "Gaming" },
 ]
 export default function ComboboxBasic() {
+
+  
+  const [roomType, setRoomType] = useState("");
+  
+
+  
     return (
   <>
-  <Select items={items}>
+  <Select value={roomType} onValueChange={(value) => setRoomType(value)}>
   <SelectTrigger className="w-[180px]">
-    <SelectValue placeholder="Theme" />
+    <SelectValue placeholder="" />
   </SelectTrigger>
   <SelectContent>
     <SelectGroup>
