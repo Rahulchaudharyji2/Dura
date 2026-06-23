@@ -18,6 +18,12 @@ import { Mic, MessageSquare, Video, Gamepad2 } from "lucide-react";
 import axios from "axios";
 import { useAuth } from "@clerk/nextjs";
 import Chatroom from "@/components/chatroom/[id]/page";
+import {
+  MessageCircleMore,
+  Sparkles,
+  Users,
+  ArrowLeft,
+} from "lucide-react";
 
 export default function Page() {
   const { getToken, userId } = useAuth();
@@ -309,9 +315,152 @@ export default function Page() {
       name={selectedRoomName}
     />
   ) : (
-    <div className="flex items-center justify-center h-screen text-white">
-      Select a room to start chatting
+    <div
+  className="
+    relative
+    flex
+    h-[85vh]
+    w-[75vw]
+    flex-col
+    items-center
+    justify-center
+    overflow-hidden
+    rounded-[32px]
+    border
+    border-white/10
+    bg-black/20
+    backdrop-blur-2xl
+  "
+>
+  {/* Glow Effects */}
+  <div className="absolute top-20 left-20 h-72 w-72 rounded-full bg-violet-600/10 blur-3xl" />
+  <div className="absolute bottom-20 right-20 h-72 w-72 rounded-full bg-cyan-500/10 blur-3xl" />
+
+  {/* Main Icon */}
+  <div
+    className="
+      relative
+      mb-8
+      flex
+      h-32
+      w-32
+      items-center
+      justify-center
+      rounded-[32px]
+      bg-gradient-to-br
+      from-violet-600
+      via-purple-500
+      to-cyan-500
+      shadow-[0_0_80px_rgba(139,92,246,0.35)]
+    "
+  >
+    <MessageCircleMore className="h-16 w-16 text-white" />
+  </div>
+
+  {/* Heading */}
+  <h1
+    className="
+      bg-gradient-to-r
+      from-white
+      via-slate-200
+      to-slate-400
+      bg-clip-text
+      text-5xl
+      font-black
+      text-transparent
+      
+    "
+    style={{margin:"15px"}}
+  >
+    Welcome to DURA
+  </h1>
+
+  {/* Description */}
+  <p
+    className="
+      mt-4
+      max-w-xl
+      text-center
+      text-lg
+      leading-relaxed
+      text-slate-400
+
+    "
+    style={{margin:"10px"}}
+  >
+    Create rooms, collaborate with your team,
+    video call, sketch ideas together,
+    and chat in real time.
+  </p>
+
+  {/* Features */}
+  <div className="mt-10 flex gap-5">
+    <div
+      className="
+        flex
+        items-center
+        gap-2
+        rounded-2xl
+        border
+        border-white/10
+        bg-white/[0.04]
+        px-4
+        py-3
+      "
+      style={{margin:"10px"}}
+    >
+      <Users className="h-5 w-5 text-cyan-400" />
+      <span className="text-sm text-slate-300">
+        Team Rooms
+      </span>
     </div>
+
+    <div
+      className="
+        flex
+        items-center
+        gap-2
+        rounded-2xl
+        border
+        border-white/10
+        bg-white/[0.04]
+        px-4
+        py-3
+      "
+    >
+      <MessageCircleMore className="h-5 w-5 text-violet-400" />
+      <span className="text-sm text-slate-300">
+        Real-Time Chat
+      </span>
+    </div>
+
+    <div
+      className="
+        flex
+        items-center
+        gap-2
+        rounded-2xl
+        border
+        border-white/10
+        bg-white/[0.04]
+        px-4
+        py-3
+        m-5
+      "
+    >
+      <Sparkles className="h-5 w-5 text-pink-400" />
+      <span className="text-sm text-slate-300">
+        Collaborative Space
+      </span>
+    </div>
+  </div>
+
+  {/* Bottom Hint */}
+  <div className="mt-12 flex items-center gap-3 text-slate-500" style={{margin:"8px"}}>
+    <ArrowLeft className="h-4 w-4" />
+    <span>Select a room from the sidebar to start chatting</span>
+  </div>
+</div>
   )}
 </div>
       </div>

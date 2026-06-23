@@ -1,7 +1,7 @@
 "use client";
 
 import { Hash, SendHorizonal } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState ,useRef} from "react";
 import { useAuth } from "@clerk/nextjs";
 import axios from "axios";
 
@@ -13,99 +13,102 @@ interface PageProps {
 export default function Page({ id, name }: PageProps) {
   const { getToken, userId } = useAuth();
 
-  const [content, setContent] = useState("");
-  const [ws, setWs] = useState<WebSocket | null>(null);
-  const [messages, setMessages] = useState<any[]>([]);
+const [content, setContent] = useState("");
+const [messages, setMessages] = useState<any[]>([]);
+const wsRef = useRef<WebSocket | null>(null);
 
-  // Fetch old messages
-  useEffect(() => {
-    if (!id) return;
+// Load room messages
+useEffect(() => {
+  if (!id) return;
 
-    const fetchMessages = async () => {
-      try {
-        const token = await getToken();
+  (async () => {
+    try {
+      const token = await getToken();
 
-        const res = await axios.get(
-          `http://localhost:5050/roomchat/${id}`,
-          {
-            headers: {
-              authorization: `Bearer ${token}`,
-            },
-          }
-        );
+      const { data } = await axios.get(
+        `http://localhost:5050/roomchat/${id}`,
+        {
+          headers: {
+            authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
-        console.log("Fetched messages:", res.data.messages);
-        setMessages(res.data.messages || []);
-      } catch (err) {
-        console.error("Error fetching messages:", err);
-      }
-    };
+      setMessages(data.messages ?? []);
+    } catch (error) {
+      console.error(error);
+    }
+  })();
+}, [id, getToken]);
 
-    fetchMessages();
-  }, [id, getToken]);
-
-  // WebSocket Connection
-  useEffect(() => {
+// Connect websocket
+useEffect(() => {
   if (!id) return;
 
   let socket: WebSocket;
 
-  const connect = async () => {
+  (async () => {
     const token = await getToken();
 
     socket = new WebSocket(
       `ws://localhost:8080?token=${token}`
     );
 
+    wsRef.current = socket;
+
     socket.onopen = () => {
+      console.log("WS Connected");
+
       socket.send(
         JSON.stringify({
           type: "join",
           roomId: id,
         })
       );
-
-      setWs(socket);
     };
 
     socket.onmessage = (event) => {
-      console.log("WS MESSAGE RECEIVED:", event.data);
-      const data = JSON.parse(event.data);
+      const message = JSON.parse(event.data);
 
-      setMessages((prev) => [...prev, data]);
+      setMessages((prev) => {
+        if (prev.some((m) => m.id === message.id)) {
+          return prev;
+        }
+
+        return [...prev, message];
+      });
     };
-  };
 
-  connect();
+    socket.onclose = () => {
+      console.log("WS Closed");
+    };
+  })();
 
   return () => {
     socket?.close();
+    wsRef.current = null;
   };
-}, [id]);
+}, [id, getToken]);
 
-  const sendMessage = () => {
-    if (!content.trim()) return;
-
-    if (ws && ws.readyState === WebSocket.OPEN) {
-      ws.send(
-        JSON.stringify({
-          type: "chat",
-          roomId: id,
-          content,
-        })
-      );
-
-      setContent("");
-    }
-  };
-
-  if (!id) {
-    return (
-      <div className="flex h-[85vh] w-[75vw] items-center justify-center text-slate-400">
-        Select a room to start chatting
-      </div>
-    );
+const sendMessage = () => {
+  if (
+    !content.trim() ||
+    !wsRef.current ||
+    wsRef.current.readyState !== WebSocket.OPEN
+  ) {
+    return;
   }
+
+  wsRef.current.send(
+    JSON.stringify({
+      type: "chat",
+      roomId: id,
+      content,
+    })
+  );
+
+  setContent("");
+};
 
   return (
     <div

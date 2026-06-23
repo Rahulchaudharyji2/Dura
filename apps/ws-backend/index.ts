@@ -16,33 +16,76 @@ interface roomUser {
 }
 const roomUsers: roomUser[] = [];
 
-wss.on("connection", async function connection(ws, req) {
+wss.on("connection", function connection(ws, req) {
   const token = req.url?.split("?token=")[1];
 
   if (!token) {
     ws.close(1008, "Token is required");
     return;
   }
-  const payload = await verifyToken(token, {
-    secretKey: process.env.CLERK_SECRET_KEY,
-  });
-  const userId = payload.sub;
 
-  roomUsers.push({ ws, roomId: "", userId });
+  let userId: string | null = null;
+  let isVerified = false;
+  const messageQueue: any[] = [];
+
   ws.on("error", console.error);
 
-  ws.on("message", async function message(data) {
-    let parsedData;
-    if (typeof data !== "string") {
-      parsedData = JSON.parse(data.toString());
+  ws.on("close", () => {
+    const index = roomUsers.findIndex((u) => u.ws === ws);
+    if (index !== -1) {
+      roomUsers.splice(index, 1);
+      console.log(`User ${userId || "unverified"} disconnected. Cleaned up connection.`);
+    }
+  });
+
+  // Verify token asynchronously
+  verifyToken(token, {
+    secretKey: process.env.CLERK_SECRET_KEY,
+  })
+    .then((payload) => {
+      userId = payload.sub;
+      isVerified = true;
+      roomUsers.push({ ws, roomId: "", userId });
+      console.log(`User ${userId} authenticated successfully`);
+
+      // Flush queued messages
+      while (messageQueue.length > 0) {
+        const msg = messageQueue.shift();
+        handleMessage(msg);
+      }
+    })
+    .catch((err) => {
+      console.error("Token verification failed:", err);
+      ws.close(1008, "Invalid token");
+    });
+
+  ws.on("message", function message(data) {
+    if (!isVerified) {
+      messageQueue.push(data);
     } else {
-      parsedData = JSON.parse(data); // {type: "join-room", roomId: 1}
+      handleMessage(data);
+    }
+  });
+
+  async function handleMessage(data: any) {
+    if (!userId) return;
+
+    let parsedData;
+    try {
+      if (typeof data !== "string") {
+        parsedData = JSON.parse(data.toString());
+      } else {
+        parsedData = JSON.parse(data);
+      }
+    } catch (e) {
+      console.error("Failed to parse websocket message:", e);
+      return;
     }
 
     console.log(`Received message from user ${userId}:`, parsedData);
     if (parsedData.type === "join") {
       const { roomId } = parsedData;
-      const user = roomUsers.find((u) => u.userId === userId);
+      const user = roomUsers.find((u) => u.ws === ws);
       if (user) {
         user.roomId = roomId;
       }
@@ -61,7 +104,7 @@ wss.on("connection", async function connection(ws, req) {
     }
 
     if (parsedData.type === "chat") {
-      const user = roomUsers.find((u) => u.userId === userId);
+      const user = roomUsers.find((u) => u.ws === ws);
       if (!user) {
         console.error(`User ${userId} not found in roomUsers`);
         return;
@@ -71,42 +114,34 @@ wss.on("connection", async function connection(ws, req) {
         console.error(`User ${userId} has not joined a room`);
         return;
       }
-      // Broadcast the message to all clients in the same room
+      const chatMessage = await prisma.message.create({
+        data: {
+          clerkId: userId,
+          roomId,
+          content: parsedData.content,
+        },
+        include: {
+          user: {
+            select: {
+              name: true,
+              clerkId: true,
+            },
+          },
+        },
+      });
       roomUsers.forEach((u) => {
-        if (u.roomId === roomId && u.ws.readyState === WebSocket.OPEN) {
-          u.ws.send(
-            JSON.stringify({
-              type: "chat",
-             userId,
-              message: parsedData.content,
-            }),
+        if (
+          u.roomId === roomId &&
+          u.ws.readyState === WebSocket.OPEN
+        ) {
+          console.log(
+            `Sending message to ${u.userId} in room ${roomId}`
           );
+
+          u.ws.send(JSON.stringify(chatMessage));
         }
       });
-      const chatMessage = await prisma.message.create({
-  data: {
-    clerkId: userId,
-    roomId,
-    content: parsedData.content,
-  },
-  include: {
-    user: {
-      select: {
-        name: true,
-        clerkId: true,
-      },
-    },
-  },
-});
-roomUsers.forEach((u) => {
-  if (
-    u.roomId === roomId &&
-    u.ws.readyState === WebSocket.OPEN
-  ) {
-    u.ws.send(JSON.stringify(chatMessage));
-  }
-});
       console.log(`chat message saved to database: ${chatMessage.id}`);
     }
-  });
+  }
 });
