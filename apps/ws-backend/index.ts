@@ -84,13 +84,28 @@ wss.on("connection", async function connection(ws, req) {
         }
       });
       const chatMessage = await prisma.message.create({
-        data: {
-          //@ts-ignore
-         clerkId: userId,
-          roomId,
-          content: parsedData.content,
-        },
-      });
+  data: {
+    clerkId: userId,
+    roomId,
+    content: parsedData.content,
+  },
+  include: {
+    user: {
+      select: {
+        name: true,
+        clerkId: true,
+      },
+    },
+  },
+});
+roomUsers.forEach((u) => {
+  if (
+    u.roomId === roomId &&
+    u.ws.readyState === WebSocket.OPEN
+  ) {
+    u.ws.send(JSON.stringify(chatMessage));
+  }
+});
       console.log(`chat message saved to database: ${chatMessage.id}`);
     }
   });

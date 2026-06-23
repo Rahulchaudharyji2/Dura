@@ -17,10 +17,11 @@ import { Input } from "@/components/ui/input";
 import { Mic, MessageSquare, Video, Gamepad2 } from "lucide-react";
 import axios from "axios";
 import { useAuth } from "@clerk/nextjs";
+import Chatroom from "@/components/chatroom/[id]/page";
 
 export default function Page() {
-  const { getToken,userId } = useAuth();
-  
+  const { getToken, userId } = useAuth();
+
   useEffect(() => {
     document.body.style.overflow = "hidden";
 
@@ -28,24 +29,25 @@ export default function Page() {
       document.body.style.overflow = "auto";
     };
   }, []);
- type RoomType = "voice" | "chat" | "VideoRoom" | "gamingRoom";
+  type RoomType = "voice" | "chat" | "VideoRoom" | "gamingRoom";
 
-interface Room {
-  id: string;
-  name: string;
-  typeofRoom: RoomType;
-  users: {
+  interface Room {
     id: string;
-    clerkId: string;
     name: string;
-    email: string;
-  }[];
-}
+    typeofRoom: RoomType;
+    users: {
+      id: string;
+      clerkId: string;
+      name: string;
+      email: string;
+    }[];
+  }
 
-const [roomsData, setRoomsData] = useState<Room[]>([]);
+  const [roomsData, setRoomsData] = useState<Room[]>([]);
   const [roomName, setRoomName] = useState("");
   const [roomType, setRoomType] = useState("");
-  
+  const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
+  const [selectedRoomName, setSelectedRoomName] = useState<string | null>(null);
   const fetchRooms = async () => {
     const token = await getToken();
 
@@ -83,20 +85,23 @@ const [roomsData, setRoomsData] = useState<Room[]>([]);
       console.error("Error creating room:", error);
     }
   };
-  const handleJoinRoom = async (roomId: string)=>{
-    try{
-      const response= await axios.post(`http://localhost:5050/joinroom/${roomId}`,{},{
-        headers:{
-          authorization: "Bearer "+(await getToken()),
-        }
-      });
-      console.log("Joined room:",response.data);
+  const handleJoinRoom = async (roomId: string) => {
+    try {
+      const response = await axios.post(
+        `http://localhost:5050/joinroom/${roomId}`,
+        {},
+        {
+          headers: {
+            authorization: "Bearer " + (await getToken()),
+          },
+        },
+      );
+      console.log("Joined room:", response.data);
       fetchRooms();
-
-    }catch(error){
+    } catch (error) {
       console.error("Error joining room:", error);
     }
-  }
+  };
 
   return (
     <div className="relative flex min-h-screen flex-col lg:flex-row bg-[#09090B]">
@@ -199,7 +204,9 @@ const [roomsData, setRoomsData] = useState<Room[]>([]);
           <div className="space-y-3">
             {roomsData.map((room) => {
               console.log("Room:", room);
-              const isMember = room.users?.some((user) => user.clerkId === userId);
+              const isMember = room.users?.some(
+                (user) => user.clerkId === userId,
+              );
               console.log("Is member:", isMember);
               const Icon =
                 room.typeofRoom === "voice"
@@ -227,7 +234,12 @@ const [roomsData, setRoomsData] = useState<Room[]>([]);
             hover:border-violet-500/30
             transition-all
             duration-300
+
           "
+                  onClick={() => {
+                    setSelectedRoomId(room.id);
+                    setSelectedRoomName(room.name);
+                  }}
                 >
                   <div className="flex items-center gap-3">
                     <div
@@ -267,21 +279,21 @@ const [roomsData, setRoomsData] = useState<Room[]>([]);
                   >
                     Live
                   </span>
-                  {!isMember&&(
-                      <Button
-                    className="
+                  {!isMember && (
+                    <Button
+                      className="
               rounded-full
               bg-blue-500/15
               px-2
               py-1
               text-xs
               text-blue-400
-            " onClick={() => handleJoinRoom(room.id)}
-                  >
-                    Join Now
-                  </Button>
+            "
+                      onClick={() => handleJoinRoom(room.id)}
+                    >
+                      Join Now
+                    </Button>
                   )}
-                  
                 </Button>
               );
             })}
@@ -289,34 +301,19 @@ const [roomsData, setRoomsData] = useState<Room[]>([]);
         </div>
       </div>
       {/* Main Area */}
-      <div
-        className="
-    relative
-    z-10
-    flex
-    flex-1
-    items-center
-    justify-center
-    p-4
-    md:p-6
-  "
-      >
-        <div
-          className="
-        flex
-        h-[80vh]
-        w-[85%]
-        items-center
-        justify-center
-        rounded-[32px]
-        border
-        border-white/10
-        bg-black/20
-        backdrop-blur-2xl
-      "
-        >
-          <h1 className="text-5xl font-black text-slate-700">Output Room</h1>
-        </div>
+      <div>
+        <div>
+  {selectedRoomId && selectedRoomName ? (
+    <Chatroom
+      id={selectedRoomId}
+      name={selectedRoomName}
+    />
+  ) : (
+    <div className="flex items-center justify-center h-screen text-white">
+      Select a room to start chatting
+    </div>
+  )}
+</div>
       </div>
     </div>
   );

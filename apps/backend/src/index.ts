@@ -164,7 +164,65 @@ app.get("/rooms", authMiddleware, async (req: Request, res: Response) => {
       .json({ message: "Internal server error", error: String(err) });
   }
 });
+app.get("/roomchat/:id", authMiddleware, async (req, res) => {
+  //@ts-ignore
+  const clerkId = req.userId;
 
+  const userExist = await prisma.user.findUnique({
+    where: { clerkId },
+  });
+
+  if (!userExist) {
+    return res.status(400).json({
+      message: "User does not exist",
+    });
+  }
+
+  const { id } = req.params;
+
+  const room = await prisma.room.findUnique({
+    //@ts-ignore
+    where: { id },
+    include: {
+      users: true,
+    },
+  });
+
+  if (!room) {
+    return res.status(404).json({
+      message: "Room does not exist",
+    });
+  }
+//@ts-ignore
+  const isMember = room.users.some(
+    //@ts-ignore
+    (u) => u.id === userExist.id
+  );
+
+  if (!isMember) {
+    return res.status(403).json({
+      message: "You are not a member of this room",
+    });
+  }
+
+  const messages = await prisma.message.findMany({
+  where: {
+    //@ts-ignore
+    roomId: id,
+  },
+  include: {
+    user: {
+      select: {
+        clerkId: true,
+        name: true,
+      },
+    },
+  },
+});
+
+  return res.status(200).json({ messages });
+});
+    
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
