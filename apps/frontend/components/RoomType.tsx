@@ -14,35 +14,41 @@ import axios from "axios";
 
 
 const items = [
-  { label: "Voice", value: "Voice" },
-  { label: "Chat", value: "Chat" },
+  { label: "voice", value: "voice" },
+  { label: "chat", value: "chat" },
   { label: "VideoRoom", value: "VideoRoom" },
-  { label: "Gaming", value: "Gaming" },
+  { label: "Gaming", value: "gamingRoom" },
 ]
-export default function ComboboxBasic() {
+type Props = {
+  roomType: string;
+  setRoomType: React.Dispatch<React.SetStateAction<string>>;
+};
 
-  
-  const [roomType, setRoomType] = useState("");
-  
+export default function ComboboxBasic({
+  roomType,
+  setRoomType,
+}: Props) {
+  return (
+    <Select
+      value={roomType}
+      onValueChange={(value) => setRoomType(value)}
+    >
+      <SelectTrigger className="w-[180px]">
+        <SelectValue placeholder="Select room type" />
+      </SelectTrigger>
 
-  
-    return (
-  <>
-  <Select value={roomType} onValueChange={(value) => setRoomType(value)}>
-  <SelectTrigger className="w-[180px]">
-    <SelectValue placeholder="" />
-  </SelectTrigger>
-  <SelectContent>
-    <SelectGroup>
-      {items.map((item) => (
-        <SelectItem key={item.value} value={item.value}>
-          {item.label}
-        </SelectItem>
-      ))}
-    </SelectGroup>
-  </SelectContent>
-</Select>
-
-    </>
+      <SelectContent>
+        <SelectGroup>
+          {items.map((item) => (
+            <SelectItem
+              key={item.value}
+              value={item.value}
+            >
+              {item.label}
+            </SelectItem>
+          ))}
+        </SelectGroup>
+      </SelectContent>
+    </Select>
   );
 }

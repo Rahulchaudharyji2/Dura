@@ -18,6 +18,9 @@ import { Mic, MessageSquare, Video, Gamepad2 } from "lucide-react";
 import axios from "axios";
 import { useAuth } from "@clerk/nextjs";
 import Chatroom from "@/components/chatroom/[id]/page";
+import VideoRoom from "@/components/Videoroom/[id]/page";
+import VoiceRoom from "@/components/voiceroom/[id]/page";
+import GamingRoom from "@/components/gamingroom/[id]/page";
 import {
   MessageCircleMore,
   Sparkles,
@@ -54,6 +57,7 @@ export default function Page() {
   const [roomType, setRoomType] = useState("");
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
   const [selectedRoomName, setSelectedRoomName] = useState<string | null>(null);
+  const [selectedRoomType, setSelectedRoomType] = useState<string | null>(null);
   const fetchRooms = async () => {
     const token = await getToken();
 
@@ -77,7 +81,7 @@ export default function Page() {
         "http://localhost:5050/createroom",
         {
           name: roomName,
-          type: roomType,
+         typeofRoom: roomType,
         },
         {
           headers: {
@@ -117,25 +121,24 @@ export default function Page() {
       <div className="absolute right-20 top-20 h-72 w-72 rounded-full bg-cyan-500/20 blur-3xl" />{" "}
       <div className="absolute bottom-10 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-pink-500/10 blur-3xl" />
       {/* Left Sidebar */}
-      <div
-        className="
+<div
+  className="
     relative
     z-10
     flex
+    h-screen
     w-full
     lg:w-[340px]
     shrink-0
     flex-col
-    border-b
-    lg:border-b-0
-    lg:border-r
     border-white/10
     bg-black/30
     backdrop-blur-3xl
     p-4
     md:p-5
+    overflow-hidden
   "
-      >
+>
         <AlertDialog>
           <AlertDialogTrigger asChild>
             <Button
@@ -183,7 +186,7 @@ export default function Page() {
               </div>
               <label className="text-sm text-slate-400">Room Type</label>
 
-              <ComboboxBasic />
+              <ComboboxBasic roomType={roomType} setRoomType={setRoomType} />
             </div>
 
             <AlertDialogFooter>
@@ -207,7 +210,7 @@ export default function Page() {
             </span>
           </div>
 
-          <div className="space-y-3">
+          <div className="mt-8 flex-1 overflow-y-auto pb-23">
             {roomsData.map((room) => {
               console.log("Room:", room);
               const isMember = room.users?.some(
@@ -245,6 +248,7 @@ export default function Page() {
                   onClick={() => {
                     setSelectedRoomId(room.id);
                     setSelectedRoomName(room.name);
+                    setSelectedRoomType(room.typeofRoom);
                   }}
                 >
                   <div className="flex items-center gap-3">
@@ -285,6 +289,7 @@ export default function Page() {
                   >
                     Live
                   </span>
+                  
                   {!isMember && (
                     <Button
                       className="
@@ -309,12 +314,33 @@ export default function Page() {
       {/* Main Area */}
       <div>
         <div>
-  {selectedRoomId && selectedRoomName ? (
-    <Chatroom
-      id={selectedRoomId}
-      name={selectedRoomName}
-    />
-  ) : (
+  {
+  selectedRoomId &&
+  selectedRoomName &&
+  selectedRoomType ? (
+    selectedRoomType === "chat" ? (
+      <Chatroom
+        id={selectedRoomId}
+        name={selectedRoomName}
+      />
+    ) : selectedRoomType === "VideoRoom" ? (
+      <VideoRoom
+        id={selectedRoomId}
+        name={selectedRoomName}
+      />
+    ) : selectedRoomType === "voice" ? (
+      <VoiceRoom
+        id={selectedRoomId}
+        name={selectedRoomName}
+      />
+    ) : selectedRoomType === "gamingRoom" ? (
+      <GamingRoom
+        id={selectedRoomId}
+        name={selectedRoomName}
+      />
+    ) : null
+  )
+ : (
     <div
   className="
     relative

@@ -112,7 +112,7 @@ app.get("/debug", authMiddleware, (req: any, res) => {
 app.post("/createroom", authMiddleware, async (req: Request, res: Response) => {
   //@ts-ignore
   const userId = req.userId;
-  const { name, typeofRoom } = req.body;
+  const { name,typeofRoom  } = req.body;
   const roomExist = await prisma.room.findMany({
     //@ts-ignore
     where: {
